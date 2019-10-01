@@ -25,6 +25,7 @@ app.get("/urls.json", (req, res) => {
 
 app.get("/urls", (req, res) => {
   let templateVars = { urls: urlDatabase };
+  console.log(urlDatabase);
   res.render("urls_index", templateVars);
 });
 
@@ -47,12 +48,25 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = 'http://' + urlDatabase[req.params.shortURL];
+  const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
 });
 
+// get redirected to urls after pressing delete
 app.post("/urls/:shortURL/delete", (req, res) => {
   delete urlDatabase[req.params.shortURL];
+  res.redirect(`/urls`);
+});
+
+// redirect to Edit page after pressing edit on urls page
+app.post("/urls/:shortURL", (req, res) => {
+  let shortURL = req.params.url;
+  res.redirect(`/urls/${shortURL}`);
+});
+
+// redirect to url after pressing submit
+app.post("/urls/:shortURL/Submit", (req, res) => {
+  urlDatabase[req.params.shortURL] = req.body.newURL;
   res.redirect(`/urls`);
 });
 
