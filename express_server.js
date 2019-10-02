@@ -75,7 +75,6 @@ app.get("/urls", (req, res) => {
   let templateVars = { 
     user: users[req.cookies["user_id"]], // passing in user-id
     urls: urlsForUser(req.cookies["user_id"]) };
-
   res.render("urls_index", templateVars);
 });
 
@@ -105,15 +104,11 @@ app.get("/urls/:shortURL", (req, res) => {
     user: users[req.cookies["user_id"]], // passing in user-id
     shortURL: req.params.shortURL, 
     longURL: urlDatabase[req.params.shortURL].longURL };
-  if (!templateVars.user) {
-    res.redirect("/login");
-  } else {
     res.render("urls_show", templateVars);
-  }
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL].longURL;
+  const longURL = "http://"+urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
 
@@ -162,7 +157,7 @@ app.post("/urls/:shortURL/Submit", (req, res) => {
 app.post("/urls", (req, res) => {
   let string = generateRandomString();
   const user_Id = req.cookies["user_id"];
-  urlDatabase[string] = {longURL: req.body.longURL, userID: user_Id};
+  urlDatabase[string] = {longURL: req.body.longURL, id: user_Id};
   res.redirect(`/urls/${string}`);
 });
 
