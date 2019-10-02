@@ -2,13 +2,24 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
-
-// var express = require('express');
-var cookieParser = require('cookie-parser');
+const cookieParser = require('cookie-parser');
 
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
+
+const users = { 
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "user@example.com", 
+    password: "purple-monkey-dinosaur"
+  },
+ "user2RandomID": {
+    id: "user2RandomID", 
+    email: "user2@example.com", 
+    password: "dishwasher-funk"
+  }
+};
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -16,16 +27,9 @@ const urlDatabase = {
 };
 
 app.get('/', function (req, res) {
-  // Cookies that have not been signed
   res.cookie("username", req.body.username);
   console.log('Cookies: ', req.cookies)
 });
-
-// app.get('/setcookie', function(req, res){
-//   // setting cookies
-//   res.cookie('username', 'john doe', { maxAge: 900000, httpOnly: true });
-//   return res.send('Cookie has been set');
-// });
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -73,6 +77,14 @@ app.get("/urls/:shortURL", (req, res) => {
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
+});
+
+// a get /register endpoint, which returns the urls_register template
+app.get("/register", (req, res) => {
+  let templateVars = {
+    username: req.cookies["username"]
+  };
+  res.render("urls_register", templateVars);
 });
 
 // get redirected to urls after pressing delete
