@@ -78,11 +78,17 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
+// If someone is not logged in when trying to access /urls/new, redirect them to the login page.
+
 app.get("/urls/new", (req, res) => {
   let templateVars = {
     user: users[req.cookies["user_id"]] // passing in user-id
   };
-  res.render("urls_new", templateVars);
+  if (!templateVars.user) {
+    res.redirect("/login");
+  } else {
+    res.render("urls_new", templateVars);
+  }
 });
 
 app.get("/urls/:shortURL", (req, res) => {
@@ -197,8 +203,6 @@ function generateRandomString() {
 //   }
 //   return false;
 // };
-
-
 
 // const findUser = function (username) {
 //   return data.user._find((user) => user._username === username)
