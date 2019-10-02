@@ -26,16 +26,6 @@ const urlDatabase = {
   i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" }
 };
 
-// Add a new userID (string) property to individual url objects within the urlDatabase collection.
-// It should just contain the user ID (the key in the users collection) and
-// not a copy of the entire user data.
-// All URLs should now have this extra property.
-
-// const urlDatabase = {
-//   "b2xVn2": "http://www.lighthouselabs.ca",
-//   "9sm5xK": "http://www.google.com"
-// };
-
 const checkEmail = function(email) {
   for (let user in users) {
     if (users[user].email === email) {
@@ -53,6 +43,16 @@ const checkPassword = function(password) {
   }
   return undefined;
 };
+
+// returns the URLs where the userID is equal to the id of the currently logged in user.
+const urlsForUser = function(id) {
+  let urls = {};
+  for (let url in urlDatabase)
+  if (id === urlDatabase[url].userID) {
+    urls[url] = urlDatabase[url];
+  }
+  return urls;
+}
 
 app.get('/', function (req, res) {
   res.cookie("username", req.body.username);
@@ -74,7 +74,7 @@ app.get("/urls.json", (req, res) => {
 app.get("/urls", (req, res) => {
   let templateVars = { 
     user: users[req.cookies["user_id"]], // passing in user-id
-    urls: urlDatabase };
+    urls: urlsForUser(req.cookies["user_id"]) };
 
   res.render("urls_index", templateVars);
 });
@@ -105,7 +105,11 @@ app.get("/urls/:shortURL", (req, res) => {
     user: users[req.cookies["user_id"]], // passing in user-id
     shortURL: req.params.shortURL, 
     longURL: urlDatabase[req.params.shortURL].longURL };
-  res.render("urls_show", templateVars);
+  if (!templateVars.user) {
+    res.redirect("/login");
+  } else {
+    res.render("urls_show", templateVars);
+  }
 });
 
 app.get("/u/:shortURL", (req, res) => {
@@ -151,7 +155,6 @@ app.post("/urls", (req, res) => {
   let string = generateRandomString();
   const user_Id = req.cookies["user_id"];
   urlDatabase[string] = {longURL: req.body.longURL, userID: user_Id};
-  // console.log(urlDatabase);
   res.redirect(`/urls/${string}`);
 });
 
@@ -203,20 +206,3 @@ function generateRandomString() {
   }
   return shortenedURL;
 }
-
-// checks if entered email already exits
-// const checkUserEmail = function (users, eMail) {
-//   for (let user in users) {
-//     if (users[user].email === eMail) {
-//       return true;
-//     } else {
-//       return false;
-//     }
-//   }
-//   return false;
-// };
-
-// const findUser = function (username) {
-//   return data.user._find((user) => user._username === username)
-// };
-
