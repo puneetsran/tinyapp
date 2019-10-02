@@ -123,6 +123,19 @@ app.post("/logout", (req, res) =>  {
   res.redirect(`/urls`);
 });
 
+// redirects to urls page after registering
+app.post("/register" , (req, res) => {
+  let randUserID = generateRandomString();
+  users[randUserID] = {
+    id: randUserID, 
+    email: req.body.email, 
+    password: req.body.password
+  };
+  res.cookie("user_id", randUserID);
+  console.log(`randUserID`);
+  res.redirect(`/urls`);
+});
+
 function generateRandomString() {
   let shortenedURL = '';
   let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvxyz'
