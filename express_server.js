@@ -45,8 +45,9 @@ app.get("/urls.json", (req, res) => {
 
 app.get("/urls", (req, res) => {
   let templateVars = { 
-    username: req.cookies["username"], // passing in username
+    user: users[req.cookies["user_id"]], // passing in username
     urls: urlDatabase };
+
   res.render("urls_index", templateVars);
 });
 
@@ -61,14 +62,14 @@ app.get("/hello", (req, res) => {
 
 app.get("/urls/new", (req, res) => {
   let templateVars = {
-    username: req.cookies["username"] // passing in username
+    user: users[req.cookies["user_id"]] // passing in username
   };
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
   let templateVars = { 
-    username: req.cookies["username"], // passing in username
+    user: users[req.cookies["user_id"]], // passing in username
     shortURL: req.params.shortURL, 
     longURL: urlDatabase[req.params.shortURL] };
   res.render("urls_show", templateVars);
@@ -82,7 +83,7 @@ app.get("/u/:shortURL", (req, res) => {
 // a get /register endpoint, which returns the urls_register template
 app.get("/register", (req, res) => {
   let templateVars = {
-    username: req.cookies["username"]
+    user: users[req.cookies["user_id"]]
   };
   res.render("urls_register", templateVars);
 });
@@ -125,15 +126,19 @@ app.post("/logout", (req, res) =>  {
 
 // redirects to urls page after registering
 app.post("/register" , (req, res) => {
-  let randUserID = generateRandomString();
-  users[randUserID] = {
-    id: randUserID, 
-    email: req.body.email, 
-    password: req.body.password
-  };
-  res.cookie("user_id", randUserID);
-  console.log(`randUserID`);
-  res.redirect(`/urls`);
+  if (!req.body.email || !req.body.password || checkEmail(users, req.body.email)) {
+    res.status(400);
+    res.send(`Email already exists`);
+  } else {
+    let randUserID = generateRandomString();
+    users[randUserID] = {
+      id: randUserID, 
+      email: req.body.email, 
+      password: req.body.password
+    };
+    res.cookie("user_id", randUserID);
+    res.redirect(`/urls`);
+  }
 });
 
 function generateRandomString() {
@@ -143,4 +148,16 @@ function generateRandomString() {
     shortenedURL += characters.charAt(Math.floor(Math.random() * characters.length));
   }
   return shortenedURL;
+}
+
+// checks if entered email already exits
+const checkEmail = function (users, eMail) {
+  for (let user in users) {
+    if (users[user].email === eMail) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+  return false;
 }
