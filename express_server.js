@@ -134,14 +134,22 @@ app.get("/login", (req, res) => {
 
 // get redirected to urls after pressing delete
 app.post("/urls/:shortURL/delete", (req, res) => {
-  delete urlDatabase[req.params.shortURL];
-  res.redirect(`/urls`);
+  if(req.cookies["user_id"] !== urlDatabase[req.params.shortURL].userID) {
+    res.send(`Unable to delete urls`);
+  } else {
+    delete urlDatabase[req.params.shortURL].userID;
+    res.redirect(`/urls`);
+  }
 });
 
 // redirect to Edit page after pressing edit on urls page
 app.post("/urls/:shortURL", (req, res) => {
   let shortURL = req.params.url;
-  res.redirect(`/urls/${shortURL}`);
+  if (req.cookies["user_id"] !== urlDatabase[req.params.shortURL].userID) {
+    res.send(`Unable to perform action`);
+  } else {
+    res.redirect(`/urls/${shortURL}`);
+  }
 });
 
 // redirect to url after pressing submit
