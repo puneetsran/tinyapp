@@ -22,9 +22,19 @@ const users = {
 };
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
+  i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" }
 };
+
+// Add a new userID (string) property to individual url objects within the urlDatabase collection.
+// It should just contain the user ID (the key in the users collection) and
+// not a copy of the entire user data.
+// All URLs should now have this extra property.
+
+// const urlDatabase = {
+//   "b2xVn2": "http://www.lighthouselabs.ca",
+//   "9sm5xK": "http://www.google.com"
+// };
 
 const checkEmail = function(email) {
   for (let user in users) {
@@ -78,8 +88,7 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
-// If someone is not logged in when trying to access /urls/new, redirect them to the login page.
-
+// get redirected to login page if not logged-in
 app.get("/urls/new", (req, res) => {
   let templateVars = {
     user: users[req.cookies["user_id"]] // passing in user-id
@@ -95,12 +104,12 @@ app.get("/urls/:shortURL", (req, res) => {
   let templateVars = { 
     user: users[req.cookies["user_id"]], // passing in user-id
     shortURL: req.params.shortURL, 
-    longURL: urlDatabase[req.params.shortURL] };
+    longURL: urlDatabase[req.params.shortURL].longURL };
   res.render("urls_show", templateVars);
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
+  const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
 
@@ -137,9 +146,12 @@ app.post("/urls/:shortURL/Submit", (req, res) => {
   res.redirect(`/urls`);
 });
 
+// redirects to urls/random string
 app.post("/urls", (req, res) => {
   let string = generateRandomString();
-  urlDatabase[string] = req.body.longURL;
+  const user_Id = req.cookies["user_id"];
+  urlDatabase[string] = {longURL: req.body.longURL, userID: user_Id};
+  // console.log(urlDatabase);
   res.redirect(`/urls/${string}`);
 });
 
