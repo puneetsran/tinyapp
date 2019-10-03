@@ -5,6 +5,8 @@ const bodyParser = require("body-parser");
 // const cookieParser = require('cookie-parser');
 var cookieSession = require('cookie-session')
 const bcrypt = require('bcrypt');
+const { getUserByEmail } = require('./helpers');
+const { urlsForUser } = require('./helpers');
 
 // app.use(cookieParser());
 // app.use(cookieSession());
@@ -34,25 +36,6 @@ const urlDatabase = {
   i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" }
 };
 
-const checkEmail = function(email) {
-  for (let user in users) {
-    if (users[user].email === email) {
-      return users[user];
-    }
-  }
-  return undefined;
-};
-
-// returns the URLs where the userID is equal to the id of the currently logged in user.
-const urlsForUser = function(id) {
-  let urls = {};
-  for (let url in urlDatabase)
-  if (id === urlDatabase[url].userID) {
-    urls[url] = urlDatabase[url];
-  }
-  return urls;
-}
-
 app.get('/', function (req, res) {
   res.cookie("username", req.body.username);
   console.log('Cookies: ', req.cookies)
@@ -72,7 +55,7 @@ app.get("/urls.json", (req, res) => {
 
 app.get("/urls", (req, res) => {
   
-  let newURLs = urlsForUser(req.session["user_id"])
+  let newURLs = urlsForUser(req.session["user_id"], urlDatabase)
   let templateVars = { 
     user: users[req.session["user_id"]], // passing in user-id
     urls: newURLs };
@@ -167,13 +150,16 @@ app.post("/urls", (req, res) => {
 // redirects to urls after login
 app.post("/login", (req, res) => {
 
-  let realPassword = checkEmail(req.body.email).password;
-  if (!checkEmail(req.body.email)) {
+  let userId = getUserByEmail(req.body.email, users);
+
+  let realPassword = getUserByEmail(req.body["email"], users);
+  // console.log('passworddddd', users[realPassword]["password"]);
+
+  if (!getUserByEmail(req.body.email, users)) {
     res.status(403).send(`Please enter valid credentials.`);
-  } else if (!bcrypt.compareSync(req.body.password, realPassword)) {
+  } else if (!bcrypt.compareSync(req.body.password, users[realPassword]["password"])) {
     res.status(403).send(`Wrong password`);
   } else {
-    const userId = checkEmail(req.body.email)["id"];
     req.session.user_id =  userId;
     res.redirect(`/urls`);
   }
@@ -194,7 +180,7 @@ app.post("/register" , (req, res) => {
     res.status(400).send(`Please enter an email address.`);
   } else if (req.body.password === '') {
     res.status(400).send(`Please enter a password.`);
-  } else if (checkEmail(req.body.email)) {
+  } else if (getUserByEmail(req.body.email, users)) {
     res.status(400).send(`Email already exists`);
   } else {
     let randUserID = generateRandomString();
