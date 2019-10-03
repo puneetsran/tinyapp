@@ -3,6 +3,7 @@ const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcrypt');
 
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({extended: true}));
@@ -29,15 +30,6 @@ const urlDatabase = {
 const checkEmail = function(email) {
   for (let user in users) {
     if (users[user].email === email) {
-      return users[user];
-    }
-  }
-  return undefined;
-};
-
-const checkPassword = function(password) {
-  for (let user in users) {
-    if (users[user].password === password) {
       return users[user];
     }
   }
@@ -72,10 +64,15 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  let templateVars = { 
-    user: users[req.cookies["user_id"]], // passing in user-id
-    urls: urlsForUser(req.cookies["user_id"]) };
-  res.render("urls_index", templateVars);
+  // if (!req.cookies["user_id"]) {
+  //   res.redirect("/login");
+  // } else {
+    let templateVars = { 
+      user: users[req.cookies["user_id"]], // passing in user-id
+      urls: urlsForUser(req.cookies["user_id"]) };
+      console.log(urlDatabase);
+    res.render("urls_index", templateVars);
+  // }
 });
 
 app.get("/hello", (req, res) => {
@@ -139,10 +136,11 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
 // redirect to Edit page after pressing edit on urls page
 app.post("/urls/:shortURL", (req, res) => {
-  let shortURL = req.params.url;
-  if (req.cookies["user_id"] !== urlDatabase[req.params.shortURL].userID) {
+  let shortURL = req.params.shortURL;
+  if (req.cookies["user_id"] !== urlDatabase[shortURL].userID) {
     res.send(`Unable to perform action`);
   } else {
+    urlDatabase[shortURL].longURL = req.body.longURL;
     res.redirect(`/urls/${shortURL}`);
   }
 });
@@ -163,12 +161,13 @@ app.post("/urls", (req, res) => {
 
 // redirects to urls after login
 app.post("/login", (req, res) => {
+
+  let hashedPassword = bcrypt.hashSync(req.body.password, 10);
   if (!checkEmail(req.body.email)) {
     res.status(403).send(`Please enter valid credentials.`);
-  } else if (!checkPassword(req.body.password)) {
+  } else if (!bcrypt.compareSync(checkEmail(req.body.email).password, hashedPassword)) {
     res.status(403).send(`Wrong password`);
   } else {
-    // console.log(`hii`, checkEmail(req.body.email)["id"]);
     const userId = checkEmail(req.body.email)["id"];
     res.cookie("user_id", userId);
     res.redirect(`/urls`);
@@ -183,6 +182,9 @@ app.post("/logout", (req, res) =>  {
 
 // redirects to urls page after registering
 app.post("/register" , (req, res) => {
+  const password = req.body.password;
+  const hashedPassword = bcrypt.hashSync(password, 10);
+
   if (req.body.email === '') {
     res.status(400).send(`Please enter an email address.`);
   } else if (req.body.password === '') {
@@ -194,7 +196,7 @@ app.post("/register" , (req, res) => {
     users[randUserID] = {
       id: randUserID, 
       email: req.body.email,
-      password: req.body.password
+      password: hashedPassword
     };
     res.cookie("user_id", randUserID);
     res.redirect(`/urls`);
