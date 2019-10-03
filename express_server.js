@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 const PORT = 8080;
 const bodyParser = require("body-parser");
-const cookieSession = require('cookie-session')
+const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
 const { getUserByEmail } = require('./helpers');
 const { urlsForUser } = require('./helpers');
@@ -16,15 +16,15 @@ app.use(cookieSession({
 app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
 
-const users = { 
+const users = {
   "userRandomID": {
-    id: "userRandomID", 
-    email: "user@example.com", 
+    id: "userRandomID",
+    email: "user@example.com",
     password: "purple-monkey-dinosaur"
   },
- "user2RandomID": {
-    id: "user2RandomID", 
-    email: "user2@example.com", 
+  "user2RandomID": {
+    id: "user2RandomID",
+    email: "user2@example.com",
     password: "dishwasher-funk"
   }
 };
@@ -46,13 +46,13 @@ app.get("/urls.json", (req, res) => {
 app.get("/", (req, res) => {
   if (!req.session["user_id"]) {
     return res.redirect("/login");
-  } 
+  }
   return res.redirect("/urls");
 });
 
 // will renter the urls_index page when on urls
 app.get("/urls", (req, res) => {
-  let templateVars = { 
+  let templateVars = {
     user: users[req.session["user_id"]], // passing in user-id
     urls: urlsForUser(req.session["user_id"], urlDatabase) };
   return res.render("urls_index", templateVars);
@@ -73,7 +73,7 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
 
   // if no user is logged in, page is not rendered
-  if(!req.session["user_id"]) {
+  if (!req.session["user_id"]) {
     return res.status(400).send(`Please login to edit the URL.`);
   }
 
@@ -86,9 +86,9 @@ app.get("/urls/:shortURL", (req, res) => {
   if (req.session["user_id"] !== urlDatabase[req.params.shortURL].userID) {
     return res.status(400).send(`Permission to edit URL not granted.`);
   }
-  let templateVars = { 
+  let templateVars = {
     user: users[req.session["user_id"]], // passing in user-id
-    shortURL: req.params.shortURL, 
+    shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL
   };
   return res.render("urls_show", templateVars);
@@ -113,7 +113,7 @@ app.get("/login", (req, res) => {
 app.post("/urls", (req, res) => {
 
   // if user if not not logged in, acess will be denied
-  if(!req.session["user_id"]) {
+  if (!req.session["user_id"]) {
     return res.status(400).send(`Unable to perform action`);
   }
   const string = generateRandomString();
@@ -145,7 +145,7 @@ app.post("/urls/:shortURL/Submit", (req, res) => {
 app.post("/urls/:shortURL/delete", (req, res) => {
 
   // prevents any other user from trying to delete shortURL
-  if(req.session["user_id"] !== urlDatabase[req.params.shortURL].userID) {
+  if (req.session["user_id"] !== urlDatabase[req.params.shortURL].userID) {
     return res.send(`Unable to delete urls`);
   }
   delete urlDatabase[req.params.shortURL].userID;
@@ -171,7 +171,7 @@ app.post("/register" , (req, res) => {
   }
   const randUserID = generateRandomString();
   users[randUserID] = {
-    id: randUserID, 
+    id: randUserID,
     email: req.body.email,
     password: bcrypt.hashSync(req.body.password, 10)
   };
@@ -193,7 +193,7 @@ app.post("/login", (req, res) => {
   if (!bcrypt.compareSync(req.body.password, users[realPassword]["password"])) {
     return res.status(403).send(`Wrong password`);
   }
-  req.session.user_id =  getUserByEmail(req.body.email, users);
+  req.session["user_id"] =  getUserByEmail(req.body.email, users);
   return res.redirect(`/urls`);
 });
 
