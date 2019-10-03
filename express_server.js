@@ -10,6 +10,8 @@ const { generateRandomString } = require('./helpers');
 
 app.use(cookieSession({
   name: 'session',
+  // ERIC
+  // use real keys in prod
   keys: ['key1', 'key2']
 }));
 
@@ -34,40 +36,32 @@ const urlDatabase = {
   i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" }
 };
 
-app.get('/', function (req, res) {
-  res.cookie("username", req.body.username);
-  console.log('Cookies: ', req.cookies)
-});
-
-app.get("/", (req, res) => {
-  res.send("Hello!");
-});
-
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
 app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
+  return res.json(urlDatabase);
+});
+
+app.get("/", (req, res) => {
+  // ERIC
+  // can use early returns and always return res.redirect and res.render to be safe 
+  // and makesure our program doesnt write headers twice
+  if (!req.session["user_id"]) {
+    return res.redirect("/login");
+  } 
+  return res.redirect("/urls");
 });
 
 app.get("/urls", (req, res) => {
-  
-  let newURLs = urlsForUser(req.session["user_id"], urlDatabase)
+  // ERIC
+  // variable isn't changing... use const
+  const newURLs = urlsForUser(req.session["user_id"], urlDatabase)
   let templateVars = { 
     user: users[req.session["user_id"]], // passing in user-id
     urls: newURLs };
-  res.render("urls_index", templateVars);
-
-});
-
-app.get("/hello", (req, res) => {
-  let templateVars = { greeting: 'Hello World!' };
-  res.render("hello_world", templateVars);
-});
-
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
+  return res.render("urls_index", templateVars);
 });
 
 // get redirected to login page if not logged-in
@@ -76,117 +70,118 @@ app.get("/urls/new", (req, res) => {
     user: users[req.session["user_id"]] // passing in user-id
   };
   if (!templateVars.user) {
-    res.redirect("/login");
-  } else {
-    res.render("urls_new", templateVars);
+    return res.redirect("/login");
   }
+  return res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
+  if(!req.session["user_id"]) {
+    return res.status(400).send(`Please login to edit the URL.`);
+  }
+  if (!urlDatabase[req.params.shortURL]) {
+    return res.status(400).send(`Requested URL does not exist.`);
+  }
+  if (req.session["user_id"] !== urlDatabase[req.params.shortURL].userID) {
+    return res.status(400).send(`Permission to edit URL not granted.`);
+  }
   let templateVars = { 
     user: users[req.session["user_id"]], // passing in user-id
     shortURL: req.params.shortURL, 
-    longURL: urlDatabase[req.params.shortURL].longURL };
-    res.render("urls_show", templateVars);
+    longURL: urlDatabase[req.params.shortURL].longURL
+  };
+  return res.render("urls_show", templateVars);
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  const longURL = "http://"+urlDatabase[req.params.shortURL].longURL;
-  res.redirect(longURL);
+  // ERIC
+  // Don't really need the variable
+  // const longURL = urlDatabase[req.params.shortURL].longURL;
+  res.redirect(urlDatabase[req.params.shortURL].longURL);
 });
 
 // a get /register endpoint, which returns the urls_register template
 app.get("/register", (req, res) => {
-  let templateVars = {
-    user: users[req.session["user_id"]]
-  };
-  res.render("urls_register", templateVars);
+  return res.render("urls_register");
 });
 
 app.get("/login", (req, res) => {
-  let templateVars = {
-    user: users[req.session["user_id"]]
-  };
-  res.render("urls_login", templateVars);
+  return res.render("urls_login");
 });
 
 // get redirected to urls after pressing delete
 app.post("/urls/:shortURL/delete", (req, res) => {
   if(req.session["user_id"] !== urlDatabase[req.params.shortURL].userID) {
-    res.send(`Unable to delete urls`);
-  } else {
-    delete urlDatabase[req.params.shortURL].userID;
-    res.redirect(`/urls`);
+    return res.send(`Unable to delete urls`);
   }
+  delete urlDatabase[req.params.shortURL].userID;
+  return res.redirect(`/urls`);
 });
 
 // redirect to Edit page after pressing edit on urls page
 app.post("/urls/:shortURL", (req, res) => {
-  let shortURL = req.params.shortURL;
+  const shortURL = req.params.shortURL;
   if (req.session["user_id"] !== urlDatabase[shortURL].userID) {
-    res.send(`Unable to perform action`);
-  } else {
-    urlDatabase[shortURL].longURL = req.body.longURL;
-    res.redirect(`/urls/${shortURL}`);
+    return res.send(`Unable to perform action`);
   }
+  urlDatabase[shortURL].longURL = req.body.longURL;
+  return res.redirect(`/urls/${shortURL}`);
 });
 
 // redirect to url after pressing submit
 app.post("/urls/:shortURL/Submit", (req, res) => {
   urlDatabase[req.params.shortURL]["longURL"] = req.body.newURL;
-  res.redirect(`/urls`);
+  return res.redirect(`/urls`);
 });
 
 // redirects to urls/random string
 app.post("/urls", (req, res) => {
-  let string = generateRandomString();
-  const user_Id = req.session["user_id"];
-  urlDatabase[string] = {longURL: req.body.longURL, userID: user_Id};
-  res.redirect(`/urls/${string}`);
+  if(!req.session["user_id"]) {
+    return res.status(400).send(`Unable to perform action`);
+  }
+  const string = generateRandomString();
+  urlDatabase[string] = {longURL: req.body.longURL, userID: req.session["user_id"]};
+  return res.redirect(`/urls/${string}`);
 });
 
 // redirects to urls after login
 app.post("/login", (req, res) => {
 
-  let userId = getUserByEmail(req.body.email, users);
-
-  let realPassword = getUserByEmail(req.body["email"], users);
-  // console.log('passworddddd', users[realPassword]["password"]);
+  const realPassword = getUserByEmail(req.body["email"], users);
 
   if (!getUserByEmail(req.body.email, users)) {
-    res.status(403).send(`Please enter valid credentials.`);
-  } else if (!bcrypt.compareSync(req.body.password, users[realPassword]["password"])) {
-    res.status(403).send(`Wrong password`);
-  } else {
-    req.session.user_id =  userId;
-    res.redirect(`/urls`);
+    return res.status(403).send(`Please enter valid credentials.`);
   }
+  if (!bcrypt.compareSync(req.body.password, users[realPassword]["password"])) {
+    return res.status(403).send(`Wrong password`);
+  }
+  req.session.user_id =  getUserByEmail(req.body.email, users);
+  return res.redirect(`/urls`);
 });
 
 // redirects to urls after logout and clears cookie
 app.post("/logout", (req, res) =>  {
   req.session = null;
-  res.redirect(`/urls`);
+  return res.redirect(`/urls`);
 });
 
 // redirects to urls page after registering
 app.post("/register" , (req, res) => {
-  const password = req.body.password;
-  const hashedPassword = bcrypt.hashSync(password, 10);
   if (req.body.email === '') {
-    res.status(400).send(`Please enter an email address.`);
-  } else if (req.body.password === '') {
-    res.status(400).send(`Please enter a password.`);
-  } else if (getUserByEmail(req.body.email, users)) {
-    res.status(400).send(`Email already exists`);
-  } else {
-    let randUserID = generateRandomString();
-    users[randUserID] = {
-      id: randUserID, 
-      email: req.body.email,
-      password: hashedPassword
-    };
-    req.session["user_id"] = randUserID;
-    res.redirect(`/urls`);
+    return res.status(400).send(`Please enter an email address.`);
   }
+  if (req.body.password === '') {
+    return res.status(400).send(`Please enter a password.`);
+  }
+  if (getUserByEmail(req.body.email, users)) {
+    return res.status(400).send(`Email already exists`);
+  }
+  let randUserID = generateRandomString();
+  users[randUserID] = {
+    id: randUserID, 
+    email: req.body.email,
+    password: bcrypt.hashSync(req.body.password, 10)
+  };
+  req.session["user_id"] = randUserID;
+  return res.redirect(`/urls`);
 });

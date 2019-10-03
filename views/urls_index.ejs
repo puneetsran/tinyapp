@@ -30,7 +30,7 @@
             <td><%= url %></td>
             <td><%= urls[url].longURL %></td>
             <td>
-              <form method="POST" action="/urls/<%=url%>">
+              <form method="GET" action="/urls/<%=url%>">
                 <button type="submit" class="btn btn-outline-primary">Edit</button>
               </form>
             </td>
@@ -43,10 +43,13 @@
         <% } %>
       </tbody>
     </table>
+    <form method="GET" action="/urls/new">
+      <a class="nav-item nav-link" href="/urls/new">Create a New Short Link</a>
+      <!-- <a href='#'>Create a New Short Link</a> -->
+    </form>
     <% } else { %>
       Please login or register.
-      <% } %>
-    <!--    <a href='#'>Shortened URL</a>    -->
+      <% } %>  
   </main>
   <!-- Bootstrap JS -->
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
