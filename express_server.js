@@ -3,9 +3,11 @@ const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
+// var cookieSession = require('cookie-session')
 const bcrypt = require('bcrypt');
 
 app.use(cookieParser());
+// app.use(cookieSession());
 app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
 
@@ -67,9 +69,11 @@ app.get("/urls", (req, res) => {
   // if (!req.cookies["user_id"]) {
   //   res.redirect("/login");
   // } else {
+  let newURLs = urlsForUser(req.cookies["user_id"])
     let templateVars = { 
       user: users[req.cookies["user_id"]], // passing in user-id
-      urls: urlsForUser(req.cookies["user_id"]) };
+      urls: newURLs };
+      console.log(newURLs);
       console.log(urlDatabase);
     res.render("urls_index", templateVars);
   // }
@@ -155,7 +159,7 @@ app.post("/urls/:shortURL/Submit", (req, res) => {
 app.post("/urls", (req, res) => {
   let string = generateRandomString();
   const user_Id = req.cookies["user_id"];
-  urlDatabase[string] = {longURL: req.body.longURL, id: user_Id};
+  urlDatabase[string] = {longURL: req.body.longURL, userID: user_Id};
   res.redirect(`/urls/${string}`);
 });
 
