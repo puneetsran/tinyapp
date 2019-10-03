@@ -1,15 +1,13 @@
 const express = require("express");
 const app = express();
-const PORT = 8080; // default port 8080
+const PORT = 8080;
 const bodyParser = require("body-parser");
-// const cookieParser = require('cookie-parser');
 var cookieSession = require('cookie-session')
 const bcrypt = require('bcrypt');
 const { getUserByEmail } = require('./helpers');
 const { urlsForUser } = require('./helpers');
+const { generateRandomString } = require('./helpers');
 
-// app.use(cookieParser());
-// app.use(cookieSession());
 app.use(cookieSession({
   name: 'session',
   keys: ['key1', 'key2']
@@ -175,7 +173,6 @@ app.post("/logout", (req, res) =>  {
 app.post("/register" , (req, res) => {
   const password = req.body.password;
   const hashedPassword = bcrypt.hashSync(password, 10);
-
   if (req.body.email === '') {
     res.status(400).send(`Please enter an email address.`);
   } else if (req.body.password === '') {
@@ -193,12 +190,3 @@ app.post("/register" , (req, res) => {
     res.redirect(`/urls`);
   }
 });
-
-function generateRandomString() {
-  let shortenedURL = '';
-  let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvxyz'
-  for (let i = 0; i < 6; i++) {
-    shortenedURL += characters.charAt(Math.floor(Math.random() * characters.length));
-  }
-  return shortenedURL;
-}

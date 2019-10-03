@@ -17,4 +17,13 @@ const urlsForUser = function(id,urlDatabase) {
   return urls;
 }
 
-module.exports = { getUserByEmail, urlsForUser };
+function generateRandomString() {
+  let shortenedURL = '';
+  let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvxyz'
+  for (let i = 0; i < 6; i++) {
+    shortenedURL += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  return shortenedURL;
+}
+
+module.exports = { getUserByEmail, urlsForUser, generateRandomString };
