@@ -1,3 +1,4 @@
+// checks if an email exists in the database and returns that user
 const getUserByEmail = function(email, database) {
   for (let user in database) {
     if (database[user].email === email) {
@@ -18,6 +19,7 @@ const urlsForUser = function(id,urlDatabase) {
   return urls;
 };
 
+// generates a random string of 6 characters
 const generateRandomString = function() {
   let shortenedURL = '';
   let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvxyz';
