@@ -116,9 +116,9 @@ app.post("/urls", (req, res) => {
   if (!req.session["user_id"]) {
     return res.status(400).send(`Unable to perform action`);
   }
-  const string = generateRandomString();
-  urlDatabase[string] = {longURL: req.body.longURL, userID: req.session["user_id"]};
-  return res.redirect(`/urls/${string}`);
+  const shortURL = generateRandomString();
+  urlDatabase[shortURL] = {longURL: req.body.longURL, userID: req.session["user_id"]};
+  return res.redirect(`/urls/${shortURL}`);
 });
 
 // a post /urls/shortURL endpoint
