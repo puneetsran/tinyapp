@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const PORT = 8080;
+const PORT = 3000;
 const bodyParser = require("body-parser");
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
@@ -13,7 +13,7 @@ app.use(cookieSession({
   keys: ['key1', 'key2']
 }));
 
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 
 const users = {
@@ -54,7 +54,8 @@ app.get("/", (req, res) => {
 app.get("/urls", (req, res) => {
   let templateVars = {
     user: users[req.session["user_id"]], // passing in user-id
-    urls: urlsForUser(req.session["user_id"], urlDatabase) };
+    urls: urlsForUser(req.session["user_id"], urlDatabase)
+  };
   return res.render("urls_index", templateVars);
 });
 
@@ -117,7 +118,7 @@ app.post("/urls", (req, res) => {
     return res.status(400).send(`Unable to perform action`);
   }
   const shortURL = generateRandomString();
-  urlDatabase[shortURL] = {longURL: req.body.longURL, userID: req.session["user_id"]};
+  urlDatabase[shortURL] = { longURL: req.body.longURL, userID: req.session["user_id"] };
   return res.redirect(`/urls/${shortURL}`);
 });
 
@@ -129,7 +130,7 @@ app.post("/urls/:shortURL", (req, res) => {
   if (req.session["user_id"] !== urlDatabase[shortURL].userID) {
     return res.send(`Unable to perform action`);
   }
-  
+
   // redirect to Edit page after pressing edit on urls page
   urlDatabase[shortURL].longURL = req.body.longURL;
   return res.redirect(`/urls/${shortURL}`);
@@ -153,7 +154,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 });
 
 // redirects to urls page after registering
-app.post("/register" , (req, res) => {
+app.post("/register", (req, res) => {
 
   // if email box is left empty
   if (!req.body.email) {
@@ -193,12 +194,12 @@ app.post("/login", (req, res) => {
   if (!bcrypt.compareSync(req.body.password, users[realPassword]["password"])) {
     return res.status(403).send(`Wrong password`);
   }
-  req.session["user_id"] =  getUserByEmail(req.body.email, users);
+  req.session["user_id"] = getUserByEmail(req.body.email, users);
   return res.redirect(`/urls`);
 });
 
 // redirects to urls after logout and clears cookie
-app.post("/logout", (req, res) =>  {
+app.post("/logout", (req, res) => {
   req.session = null;
   return res.redirect(`/urls`);
 });
