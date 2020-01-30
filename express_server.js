@@ -7,6 +7,7 @@ const bcrypt = require('bcrypt');
 const { getUserByEmail } = require('./helpers');
 const { urlsForUser } = require('./helpers');
 const { generateRandomString } = require('./helpers');
+const methodOverride = require('method-override')
 
 app.use(cookieSession({
   name: 'session',
